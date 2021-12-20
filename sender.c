@@ -8,15 +8,16 @@
 #include <arpa/inet.h>
 #define SIZE 1260785
 
+//this function get a socket and a pointer to file and sent it
 void send_file(FILE *file, int sockf) {
     int num = 0;
     char data[SIZE] = {0};
     while (fgets(data, SIZE, file) != NULL) {
-        if (send(sockf, data, SIZE, 0) == -1) {
+        if (send(sockf, data, SIZE, 0) == -1) { //to check if the file is sent or not
             perror("sending file error");
             exit(1);
         }
-        num = num + strlen(data);
+        num = num + strlen(data); //to get the lenght of the file
         bzero(data, SIZE);
     }
     printf("%d bytes were sent", num);
@@ -25,8 +26,8 @@ void send_file(FILE *file, int sockf) {
 int main(int argc, char **argv) {
     char buf[256];
     socklen_t len;
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == -1) {
+    int sock = socket(AF_INET, SOCK_STREAM, 0); //create a socket
+    if (sock == -1) { //check if the socket open currectly
         perror("socket");
         return -1;
     }
@@ -46,27 +47,29 @@ int main(int argc, char **argv) {
     server_addr.sin_addr.s_addr = inet_addr(ip);
 
     int err = connect(sock, (struct sockaddr *) &server_addr, sizeof(server_addr));
-    if (err == -1) {
+    if (err == -1) { //check that the connection worked
         perror("socket error");
         exit(1);
     }
     printf("Connected to Server.\n");
     char *filename = "bigfile.txt";
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 5; i++) { //send the file 5 times
         FILE *file;
-        file = fopen(filename, "r");
+        file = fopen(filename, "r"); //open the file
         if (file == NULL) {
             perror("Error in reading file.");
             exit(1);
         }
-        send_file(file, sock);
+        send_file(file, sock); //send the file
         fclose(file);
         printf("File data sent successfully.\n");
     }
 
     strcpy(buf, "reno");
     len = strlen(buf);
-    if (setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, buf, len) != 0) {
+    //change the algo to reno
+    //check if the algo change to reno
+    if (setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, buf, len) != 0) {  
         perror("setsockopt");
         return -1;
     }
@@ -76,7 +79,7 @@ int main(int argc, char **argv) {
         return -1;
     }
     printf("New: %s\n", buf);
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 5; i++) { //send the file 5 times by reno algo
         FILE *file;
         file = fopen(filename, "r");
         if (file == NULL) {
@@ -87,7 +90,7 @@ int main(int argc, char **argv) {
         fclose(file);
         printf("File data sent successfully.\n");
     }
-    printf("closing connection");
+    printf("closing connection\n");
 
     close(sock);
     return 0;
